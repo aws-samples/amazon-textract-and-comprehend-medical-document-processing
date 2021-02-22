@@ -1,0 +1,73 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: AWS ML Healthcare Workshop
+
+Metadata: 
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - 
+        Label: 
+          default: "Notebook Configuration"
+        Parameters: 
+          - NotebookName
+          - NotebookInstanceType
+          - VolumeSize
+          - CodeRepository
+
+Parameters:
+
+  NotebookName:
+    Type: String
+    Default: aws-ml-healthcare-workshop
+    Description: Enter the name of the SageMaker notebook instance. Default is aws-ml-healthcare-workshop.
+
+  VolumeSize:
+    Type: Number
+    Default: 5
+    MinValue: 5
+    MaxValue: 16384
+    ConstraintDescription: Must be an integer between 5 (GB) and 16384 (16 TB).
+    Description: Enter the size of the EBS volume in GB.
+
+  CodeRepository:
+    Type: String
+    Default: https://github.com/dalacan/aws-ml-healthcare-workshop.git
+    Description: AWS ML Healthcare Workshop repository
+
+  NotebookInstanceType:
+    Type: String
+    Default: ml.t2.medium
+    Description: Enter the SageMaker notebook instance type. Default is ml.t2.medium
+
+Resources:
+  # SageMaker Execution Role
+  SageMakerIamRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonTextractFullAccess"
+        - "arn:aws:iam::aws:policy/ComprehendFullAccess"
+        - "arn:aws:iam::aws:policy/ComprehendMedicalFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/IAMFullAccess"
+        
+  # SageMaker notebook
+  NotebookInstance:
+    Type: "AWS::SageMaker::NotebookInstance"
+    Properties:
+      InstanceType: !Ref NotebookInstanceType
+      NotebookInstanceName: !Ref NotebookName
+      RoleArn: !GetAtt SageMakerIamRole.Arn
+      VolumeSizeInGB: !Ref VolumeSize
+      DefaultCodeRepository: !Ref CodeRepository
